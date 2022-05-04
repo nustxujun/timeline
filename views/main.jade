@@ -1,17 +1,17 @@
 extends layout
 
 block content
-	svg.Heart#heart(viewBox="0 0 32 29.6" onclick="commit()")
+	svg.Heart#heart(viewBox="0 0 32 29.6",onclick="commit()")
 		path(d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z")
 
 	#commit
-		form(action="/commit" method="POST" enctype="multipart/form-data")
+		form(action="/commit", method="POST", enctype="multipart/form-data")
 			img#show-pic
 			br
-			input#select-pic(type="file" accept="image/*" name="upload_pic" onchange="getPic()")
+			input#select-pic(type="file", accept="image/*", name="upload_pic", onchange="getPic()")
 			label.Button#pic-btn(for="select-pic") 请选择一张图
 				
-			textarea#commit-input(placeholder="说点什么" rows="1" name="upload_comment")
+			textarea#commit-input(placeholder="说点什么", rows="1", name="upload_comment")
 			br
 			br
 			button.Button() 提交
