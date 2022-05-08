@@ -5,7 +5,7 @@ block content
 		path(d="M23.6,0c-3.4,0-6.3,2.7-7.6,5.6C14.7,2.7,11.8,0,8.4,0C3.8,0,0,3.8,0,8.4c0,9.4,9.5,11.9,16,21.2c6.1-9.3,16-12.1,16-21.2C32,3.8,28.2,0,23.6,0z")
 
 	#commit
-		form(action="/commit", method="POST", enctype="multipart/form-data")
+		form#commit-form(action="/commit", method="POST", enctype="multipart/form-data")
 			img#show-pic
 			br
 			input#select-pic(type="file", accept="image/*", name="upload_pic", onchange="getPic()")
@@ -14,21 +14,12 @@ block content
 			textarea#commit-input(placeholder="说点什么", rows="1", name="upload_comment")
 			br
 			br
-			button.Button() 提交
+			button.Button#commit-btn( type="button", onclick="clickCommit()") 提交
 	#year 2022
 	#timeline
-	
 	#content-list
-		//- .Item
-		//- 	.ItemBlank(style="width:120px")
-		//- 	.ItemDate 3.14
-		//- 	.ItemBlank(style="width:4px")
-		//- 	.Point
-		//- 	.ItemBlank(style="width:40px")
-		//- 	.Content
-		//- 		li aaa
-		//- 		li aaa
-		//- 		li aaa
+	#full-preview(onclick="closePreview()")
+		img#full-preview-pic
 
 	script#template(type="text/x-jquery-tmpl").
 		<div class="Item" >
@@ -45,7 +36,9 @@ block content
 
 	script(stype="text/javascript").
 
+
 		var template = $("#content-list").html();
+		$("#full-preview").hide();
 
 		function genItem(date, comments)
 		{
@@ -56,7 +49,7 @@ block content
 				let content = "<div class='Content'>";
 				if (comments[i][0])
 				{
-					content += "<img class='Content-image' src='" + comments[i][0] + "'/>";
+					content += "<img class='Content-image' onclick='preview(this)' src='" + comments[i][0] + "'/>";
 				}
 				if (comments[i][1] != "")
 				{
@@ -71,9 +64,11 @@ block content
 		{
 			$(".Item").remove();
 
-			for (let date in data)
+			for (let i in data)
 			{
-				genItem(date, data[date])
+				let date = data[i][0];
+				date = date.substring(5,date.length );
+				genItem(date, data[i][1])
 			}
 		}
 
@@ -106,4 +101,21 @@ block content
 
 			let heart = document.getElementById('heart');
 			heart.style.visibility = "hidden";
+		}
+
+		function clickCommit()
+		{
+			$("#commit-form").submit();
+			$("#commit-btn").attr("disabled", true);
+		}
+
+		function closePreview()
+		{
+			$("#full-preview").hide();
+		}
+
+		function preview(elem)
+		{
+			$("#full-preview-pic").attr("src", elem.src);
+			$("#full-preview").show();
 		}

@@ -2,6 +2,14 @@ var express = require('express');
 var router = express.Router();
 var datamgr = require("../core/datamgr")
 const multer = require("multer")
+const fs = require("fs")
+const path = require("path")
+const image_path = path.join(__dirname , "../") + "public/images/";
+if (!fs.existsSync(image_path))
+{
+  fs.mkdirSync(image_path);
+}
+
 
 const storage = multer.diskStorage({
   destination(req, res, cb){
@@ -20,17 +28,16 @@ router.get('/', function(req, res, next) {
   console.log(req.query);
 });
 
-router.post('/', upload.single("upload_pic"),function(req, res) {
-  res.render('main', { title: 'loveeveryday' });
-  console.log(req.file);
-  console.log(req.body);
-
-  let path;
+router.post('/', upload.single("upload_pic"),async function(req, res) {
+  let path = "";
   if (req.file)
     path = req.file.path.slice(7)
   let date = new Date()
-  datamgr.addData(date.toLocaleDateString(), path, req.body.upload_comment);
-
+  if (path != "" || req.body.upload_comment != "")
+  {
+    await datamgr.addData(date, path, req.body.upload_comment);
+  }
+  res.redirect('/');
 });
 
 module.exports = router;
