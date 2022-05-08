@@ -28,7 +28,7 @@ block content
 			<div class="ItemBlank" style="width:4px"/>
 			<div class="Point"/>
 			<div class="ItemBlank" style="width:40px"/>
-			<div style="float:left;width:50%;position:relative;">{{html content}}</div>
+			<div style="display:table;max-width: calc( 100% - 300px )">{{html content}}</div>
 		</div>
 
 	script(src="https://cdn.staticfile.org/jquery/2.0.0/jquery.min.js")
@@ -53,7 +53,7 @@ block content
 				}
 				if (comments[i][1] != "")
 				{
-					content += "<div>" + comments[i][1] + "</div>";
+					content += "<div class='Content-text' >" + comments[i][1] + "</div>";
 				}
 				contents += content + "</div>";
 			}
@@ -72,10 +72,16 @@ block content
 			}
 		}
 
-		$.get('/api/getall/', function (ret) 
+		let refresh_page = function ()
 		{
-			refresh(ret);
-		}) 
+			$.get('/api/getall/', function (ret) 
+			{
+				refresh(ret);
+			}) 
+		}
+
+		refresh_page()
+		//- setInterval(refresh_page, 30000);
 
 		function getPic()
 		{
@@ -107,7 +113,7 @@ block content
 		{
 			$("#commit-form").submit();
 			$("#commit-btn").attr("disabled", true);
-		}
+		} 
 
 		function closePreview()
 		{

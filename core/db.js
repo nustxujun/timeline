@@ -1,6 +1,13 @@
 
+const IS_DEVELOPMENT = false;
+
+var TABLE_PREFIX = ""
+if (IS_DEVELOPMENT)
+{
+    TABLE_PREFIX = "debug_"
+}
 const VERSION_NUM = 3;
-const TABLE_NAME = "localtable_" + VERSION_NUM;
+const TABLE_NAME = TABLE_PREFIX + "localtable_" + VERSION_NUM;
 const TABLE_FORMAT = "date char(10), timestamp bigint, comment varchar(256), image varchar(256)";
 
 var mysql = require("mysql2")
@@ -105,8 +112,8 @@ init();
 async function rebuild(oldversion, newversion)
 {
     console.log("begin to rebuild tables")
-    let old_table_name = 'localtable_' + oldversion;
-    let new_table_name = 'localtable_' + newversion;
+    let old_table_name = TABLE_PREFIX + 'localtable_' + oldversion;
+    let new_table_name = TABLE_PREFIX + 'localtable_' + newversion;
 
     let is_old_table_exists = await query("select count(table_name) as ct from information_schema.TABLES where table_name = '" + old_table_name + "';");
     is_old_table_exists = is_old_table_exists[0].ct;
