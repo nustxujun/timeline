@@ -1,8 +1,10 @@
 var db = require("./db");
+
+const VERSION_NUM = 4;
+const TABLE_FORMAT = "date char(10), timestamp bigint, comment varchar(256), image varchar(256), name varchar(32)";
+var dbtable = new db.DBTable("localtable",TABLE_FORMAT,VERSION_NUM);
 const moment= require('moment') 
 
-var virtual_data = null;
-const table_name = "localtable";
 
 exports.init = function ()
 {
@@ -11,9 +13,7 @@ exports.init = function ()
 
 exports.getAllData = async function()
 {
-	if (virtual_data)
-		return virtual_data;
-	let result =  await db.select(null, null, "timestamp desc");
+	let result =  await dbtable.select(null, null, "timestamp desc");
 	let ordered = []
 	let mapped = {}
 	for (let i in result)
@@ -27,29 +27,12 @@ exports.getAllData = async function()
 			ordered.push(mapped[date]);
 		}
 
-		mapped[date][1].push([item.image, item.comment]);
+		mapped[date][1].push([item.image, item.comment, item.name]);
 	}
 	return ordered;
 }
 
-exports.addData = async function(date, image, comment)
+exports.addData = async function(date, image, comment, name)
 {
-	if (virtual_data)
-	{
-		if (!virtual_data[date])
-		{
-			virtual_data[date] = [];
-		}
-		virtual_data[date].push([image, comment])
-		console.log(virtual_data)
-	}
-	else
-	{
-		function tostring(str)
-		{
-			str = str.replace("\\", "\\\\")
-			return "'" + str + "'";
-		}
-		return await db.insert({date: tostring(moment(date).format('YYYY-MM-DD')), timestamp: Date.now(), image: tostring(image), comment: tostring(comment)});
-	}
+		return await dbtable.insert({date: moment(date).format('YYYY-MM-DD'), timestamp: Date.now(), image: image, comment: comment, name:name});
 }

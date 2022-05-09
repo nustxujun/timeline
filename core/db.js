@@ -6,9 +6,7 @@ if (IS_DEVELOPMENT)
 {
     TABLE_PREFIX = "debug_"
 }
-const VERSION_NUM = 3;
-const TABLE_NAME = TABLE_PREFIX + "localtable_" + VERSION_NUM;
-const TABLE_FORMAT = "date char(10), timestamp bigint, comment varchar(256), image varchar(256)";
+// const { version } = require("jade/lib/jade");
 
 var mysql = require("mysql2")
 var dbconfig = 
@@ -84,42 +82,58 @@ function query(sql)
         });
 	});
 }
-
 exports.query = query;
-async function init(){
 
-    let is_table_exists = await query("select count(table_name) as ct from information_schema.TABLES where table_name = '" + TABLE_NAME + "';");
+function getRealTableName(table_name, versionNum)
+{
+    return TABLE_PREFIX + table_name + "_" +  versionNum;
+}
+
+async function initTable(table_name, format, versionNum){
+
+    let is_table_exists = await query("select count(table_name) as ct from information_schema.TABLES where table_name = '" + getRealTableName(table_name,versionNum) + "';");
     is_table_exists = is_table_exists[0].ct;
 
 
-    let result = await query("select num from version where id = 0;")
-    let dbversion = result[0].num;
-    if (dbversion != VERSION_NUM)
+    let result = await query("select num from version where table_name = '" + TABLE_PREFIX + table_name + "';");
+    let dbversion = versionNum;
+    if (result[0])
+        dbversion = result[0].num;
+    else if (is_table_exists)
     {
-        console.log("current data version is ", dbversion, ", but latest version is ", VERSION_NUM, ". so we need to rebuild.")
-        rebuild(dbversion, VERSION_NUM);
+        is_table_exists = false;
+        console.warn("We find table ",getRealTableName(table_name,versionNum), " exists which is not recorded in table 'version', so we backup the old table, and rebuid it");
+        await query("create table " + getRealTableName(table_name,versionNum) + "_backup like " + getRealTableName(table_name,versionNum) + ";");
+        await query("insert into " + getRealTableName(table_name,versionNum) + "_backup select * from " + getRealTableName(table_name,versionNum) + ";" );
+    }
+    
+    if (dbversion != versionNum)
+    {
+        console.log("current data version is ", dbversion, ", but latest version is ", versionNum, ". so we need to rebuild.")
+        rebuild(table_name, format, dbversion, versionNum);
     }
     else if (!is_table_exists)
     {
         console.log ("cannot find table, build it.")
-        rebuild(VERSION_NUM,VERSION_NUM)
+        await query("delete from version where table_name = '" + TABLE_PREFIX +  table_name + "';");
+        await query("insert into version values('" + TABLE_PREFIX +  table_name + "', "+ versionNum +");")
+        rebuild(table_name, format, versionNum,versionNum)
     }
-    console.log("db is already prepared.")
+    console.log(table_name ,"is already prepared.")
 };
 
-init();
 
-async function rebuild(oldversion, newversion)
+async function rebuild(table_name, format, oldversion, newversion)
 {
     console.log("begin to rebuild tables")
-    let old_table_name = TABLE_PREFIX + 'localtable_' + oldversion;
-    let new_table_name = TABLE_PREFIX + 'localtable_' + newversion;
+    let old_table_name = getRealTableName(table_name, oldversion);
+    let new_table_name = getRealTableName(table_name, newversion);
 
     let is_old_table_exists = await query("select count(table_name) as ct from information_schema.TABLES where table_name = '" + old_table_name + "';");
     is_old_table_exists = is_old_table_exists[0].ct;
 
     await query("drop table if exists " + new_table_name + ";");
-    await query( "create table " + new_table_name + " (" + TABLE_FORMAT +") ;");
+    await query( "create table " + new_table_name + " (" + format +") ;");
 
     if (is_old_table_exists)
     {
@@ -158,51 +172,87 @@ async function rebuild(oldversion, newversion)
 
     }
 
-    await query("update version set num = " + VERSION_NUM + " where id = 0;");
+    await query("update version set num = " + newversion + " where table_name = '" + TABLE_PREFIX + table_name + "';");
 
-    console.log("rebuild complete.")
+    console.log("Rebuild complete.")
 }
 
-exports.select = async function (cols, condistion, order)
+function tostring(str)
 {
-    let col_str = "";
-    if (!cols || !cols.length) 
+    if (typeof(str) == "string")
     {
-        col_str = "*";
+        str = str.replace("\\", "\\\\")
+        return "'" + str + "'";
     }
     else
-    {
-        for (let c in cols)
-        {
-            col_str += cols[c];
-        }
-    }
-
-    let sql = "select " + col_str + " from " + TABLE_NAME;
-    if (condistion)
-    {
-        sql += " where " + condistion;
-    }
-    if (order)
-    {
-        sql += " order by " + order;
-    }
-    let result = await query(sql);
-    return result;
+        return str;
 }
-
-exports.insert = async function (item)
+class DBTable
 {
-    let col_list = "";
-    let value_list = "";
-
-    for (let field in item)
+    constructor(table_name, format, version)
     {
-        col_list += field + ",";
-        value_list += item[field] + ",";
+        this.table_name = getRealTableName(table_name, version);
+        initTable(table_name, format, version);
     }
-    col_list = col_list.substring(0, col_list.length - 1);
-    value_list = value_list.substring(0, value_list.length - 1);
 
-    return await query("insert into " + TABLE_NAME + "(" + col_list + ") values(" + value_list + ");");
-}
+    async select(cols, condistion, order)
+    {
+        let col_str = "";
+        if (!cols || !cols.length) 
+        {
+            col_str = "*";
+        }
+        else
+        {
+            for (let c in cols)
+            {
+                col_str += cols[c];
+            }
+        }
+    
+        let sql = "select " + col_str + " from " + this.table_name;
+        if (condistion)
+        {
+            sql += " where " + condistion;
+        }
+        if (order)
+        {
+            sql += " order by " + order;
+        }
+        let result = await query(sql);
+        return result;
+    }
+
+    async insert (item)
+    {
+        let col_list = "";
+        let value_list = "";
+
+        for (let field in item)
+        {
+            col_list += field + ",";
+            value_list += tostring(item[field]) + ",";
+        }
+        col_list = col_list.substring(0, col_list.length - 1);
+        value_list = value_list.substring(0, value_list.length - 1);
+
+        return await query("insert into " + this.table_name + "(" + col_list + ") values(" + value_list + ");");
+    }
+
+    async update(item, condistion)
+    {
+        let sql = "update " + this.table_name + " set " ;
+        for (let field in item)
+        {
+            sql += field + "=" + tostring(item[field]) + ",";
+        }
+        sql = sql.substring(0, sql.length - 1);
+        if (condistion)
+        {
+            sql += " where " + condistion;
+        }
+
+        return await query(sql);
+    }
+};
+exports.DBTable = DBTable;

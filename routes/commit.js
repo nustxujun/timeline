@@ -35,7 +35,7 @@ router.post('/', upload.single("upload_pic"),async function(req, res) {
   let date = new Date()
   if (path != "" || req.body.upload_comment != "")
   {
-    await datamgr.addData(date, path, req.body.upload_comment);
+    await datamgr.addData(date, path, req.body.upload_comment, req.cookies.name);
   }
   res.redirect('/');
 });

@@ -200,3 +200,13 @@ body{
 	width:auto;
 	height:auto;
 }
+
+.xj
+{
+	background-color: skyblue;
+}
+
+.sy
+{
+	background-color: var(--content-color);
+}

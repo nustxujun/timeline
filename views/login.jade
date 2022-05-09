@@ -1,0 +1,39 @@
+extends layout
+
+block headcontent
+    style.
+        form{
+            position:fixed;
+            width:200px;
+            left: calc( 50% - 100px );
+            top:50%;
+            text-align:center;
+        }
+
+        #content{
+            width:100%;
+            margin-bottom:10px;
+        }
+
+        #submit{
+            margin : auto;
+        }
+
+        body{
+            zoom:2;
+        }
+
+        #warn
+        {
+            margin:auto ;
+            margin:bottom:10px;
+            color:red;
+        }
+      
+
+block content
+    body
+        form(action="/api/login", method="GET", autocomplete="off")
+            div#warn #{warn}
+            input#content(placeholder="Name", name="upload_name")
+            button#submit Enter

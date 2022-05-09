@@ -46,7 +46,8 @@ block content
 			let len = comments.length;
 			for (let i = 0; i < len; ++i)
 			{
-				let content = "<div class='Content'>";
+				let name = comments[i][2] || "";
+				let content = "<div class='Content " +name +  "'>";
 				if (comments[i][0])
 				{
 					content += "<img class='Content-image' onclick='preview(this)' src='" + comments[i][0] + "'/>";
@@ -81,7 +82,7 @@ block content
 		}
 
 		refresh_page()
-		//- setInterval(refresh_page, 30000);
+		setInterval(refresh_page, 30000);
 
 		function getPic()
 		{
