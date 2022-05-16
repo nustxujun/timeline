@@ -27,6 +27,7 @@ else
     var connection = mysql.createConnection(dbconfig);    
     connection.connect();
 }
+
 function getConnection(callback)
 {
     if (USE_CONNECTION_POOLING) {
@@ -50,6 +51,16 @@ else
     console.log("failed to connect mysql.")
     throw new Error("mysql errror.");
 }
+
+function keepAlive() {
+    getConnection(function (err, connection, done) {
+        if (err) { return; }
+        connection.ping();
+        console.log("ping to keepalive...")
+        done();
+    });
+}
+setInterval(keepAlive, 60 * 60 * 1000);
 
 function query(sql)
 {

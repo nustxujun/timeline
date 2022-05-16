@@ -26,16 +26,13 @@ async function compareHash(hash) {
     let diff = (now - ret[0].timestamp) ;
     if(diff > MAX_AGE)
     {
-        console.log("out of date. diff is ", diff, "is greater than",MAX_AGE);
+        console.log("out of date. diff is ", diff, "is greater than",MAX_AGE, "cur: ", now, " record: ", ret[0].timestamp);
         return false;
     }   
     return hash == ret[0].hash;
 }
 
-function updateHash(name, force_refresh)
-{
 
-}
 
 async function authRequest(req) {
     if (req.cookies[LOGIN_HASH]) {
@@ -76,7 +73,7 @@ exports.loginByName = async function(name,res) {
     }
     else 
     {
-        await dbtable.update({hash : refresh_hash}, "name='" + name + "'")
+        await dbtable.update({hash : refresh_hash, timestamp: cur}, "name='" + name + "'")
     }
     recordCookies(refresh_hash, name, res);
 

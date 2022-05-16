@@ -17,7 +17,7 @@ router.get('/login', async function (req, res, next) {
     access = "xj";
   }
   else {
-    let regs = [/(siying)/, /(思影)/]
+    let regs = [/(siying)/, /(思影)/,/(徐?隽.?的)/]
     for (let i in regs) {
       if (regs[i].test(name)) {
         access = "sy";

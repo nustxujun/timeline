@@ -8,12 +8,14 @@ module.exports =async function (req, res, next)
     {
         res.render("login", {title:"loveeveryday", warn:""})
     }
-    else if (await accountmgr.authRequest(req))
-    {
-        await accountmgr.updateHash(req.cookies, res);
+    else if (req._parsedOriginalUrl && req._parsedOriginalUrl.pathname == "/api/login") {
+        console.log("logining")
         next();
     }
-    else if (req._parsedOriginalUrl && req._parsedOriginalUrl.pathname == "/api/login") {
+    else if (await accountmgr.authRequest(req))
+    {
+        console.log("login suc. update hash")
+        await accountmgr.updateHash(req.cookies, res);
         next();
     }
     else

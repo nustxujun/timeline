@@ -1,10 +1,14 @@
 var express = require('express');
 var router = express.Router();
 var datamgr = require("../core/datamgr")
+var imageprocessor = require("../core/imageprocessor")
 const multer = require("multer")
 const fs = require("fs")
 const path = require("path")
 const image_path = path.join(__dirname , "../") + "public/images/";
+
+
+
 if (!fs.existsSync(image_path))
 {
   fs.mkdirSync(image_path);
@@ -29,13 +33,18 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/', upload.single("upload_pic"),async function(req, res) {
-  let path = "";
+  let imgpath = "";
   if (req.file)
-    path = req.file.path.slice(7)
-  let date = new Date()
-  if (path != "" || req.body.upload_comment != "")
   {
-    await datamgr.addData(date, path, req.body.upload_comment, req.cookies.name);
+    imgpath = req.file.path;
+    imageprocessor.resize(path.join(__dirname , "../") + imgpath);
+    imgpath = imgpath.slice(7);
+    
+  }
+  let date = new Date()
+  if (imgpath != "" || req.body.upload_comment != "")
+  {
+    await datamgr.addData(date, imgpath, req.body.upload_comment, req.cookies.name);
   }
   res.redirect('/');
 });
